@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Haircut Reservation Form</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    .container { max-width: 500px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 10px; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    select, input { width: 100%; padding: 8px; margin-top: 5px; border-radius: 5px; border: 1px solid #aaa; }
+    button { margin-top: 20px; padding: 10px 15px; width: 100%; border: none; background-color: #4287f5; color: white; font-size: 16px; border-radius: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Haircut Appointment Reservation</h2>
+    <form id="reservationForm">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" required />
+
+      <label for="phone">Phone Number</label>
+      <input type="tel" id="phone" name="phone" required />
+
+      <label for="date">Select Date (First Sunday of the Month)</label>
+      <select id="date" name="date" required></select>
+
+      <label for="time">Select a Time Slot</label>
+      <select id="time" name="time" required>
+        <option value="12:30 PM">12:30 PM</option>
+        <option value="1:15 PM">1:15 PM</option>
+        <option value="2:00 PM">2:00 PM</option>
+        <option value="2:45 PM">2:45 PM</option>
+        <option value="3:30 PM">3:30 PM</option>
+      </select>
+
+      <button type="submit">Reserve Spot</button>
+
+      <script>
+        // Generate first Sundays for next 12 months
+        function getFirstSundays() {
+          const dates = [];
+          const today = new Date();
+          let year = today.getFullYear();
+          let month = today.getMonth();
+
+          for (let i = 0; i < 12; i++) {
+            const firstDay = new Date(year, month, 1);
+            const dayOfWeek = firstDay.getDay();
+            const firstSunday = dayOfWeek === 0 ? 1 : 7 - dayOfWeek + 1;
+            const dateObj = new Date(year, month, firstSunday);
+            dates.push(dateObj);
+
+            month++;
+            if (month > 11) {
+              month = 0;
+              year++;
+            }
+          }
+          return dates;
+        }
+
+        function populateDateDropdown() {
+          const dateSelect = document.getElementById('date');
+          const sundays = getFirstSundays();
+
+          sundays.forEach(d => {
+            const option = document.createElement('option');
+            option.value = d.toISOString().split('T')[0];
+            option.textContent = d.toDateString();
+            dateSelect.appendChild(option);
+          });
+        }
+
+        populateDateDropdown();
+
+        // Google Sheets URL placeholder
+        const SCRIPT_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
+
+        function removeTimeSlot(selected) {
+          const timeSelect = document.getElementById('time');
+          const option = [...timeSelect.options].find(o => o.value === selected);
+          if (option) option.remove();
+        }
+
+        document.getElementById('reservationForm').addEventListener('submit', async function(e) {
+          e.preventDefault();
+
+          const formData = {
+            name: document.getElementById('name').value,
+            phone: document.getElementById('phone').value,
+            date: document.getElementById('date').value,
+            time: document.getElementById('time').value
+          };
+
+          try {
+            await fetch(SCRIPT_URL, {
+              method: 'POST',
+              mode: 'no-cors',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(formData)
+            });
+
+            removeTimeSlot(formData.time);
+            alert('Your appointment has been reserved!');
+            document.getElementById('reservationForm').reset();
+          } catch (err) {
+            alert('Error: Could not send to spreadsheet.');
+          }
+        });
+      </script>
+    </form>
+  </div>
+</body>
+</html>
